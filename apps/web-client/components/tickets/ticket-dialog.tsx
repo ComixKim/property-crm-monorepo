@@ -89,6 +89,7 @@ export function TicketDialog({ open: controlledOpen, onOpenChange: setControlled
                     .eq('tenant_id', user.id)
                     .eq('status', 'active')
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const rentedProps = rentedContracts?.map((c: any) => c.properties).filter(Boolean) || []
                 allProps = rentedProps
             }
