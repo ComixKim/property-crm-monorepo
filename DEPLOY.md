@@ -28,13 +28,24 @@ git push -u origin main
 1.  **Create New Project**: Import your Git repository.
 2.  **Configure `web-client`**:
     *   **Root Directory**: Edit to `apps/web-client`.
-    *   **Framework Preset**: Select Next.js (usually auto-detected).
+    *   **Build Command**: Enable **Override** and paste:
+        ```bash
+        cd ../.. && npx turbo run build --filter=web-client
+        ```
+    *   **Install Command**: Enable **Override** and paste:
+        ```bash
+        cd ../.. && npm install
+        ```
+    *   **Framework Preset**: Select Next.js.
     *   **Environment Variables**: Copy values from `apps/web-client/.env.example`.
-        *   `NEXT_PUBLIC_API_URL`: URL of your deployed API (see below).
-        *   `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase Project URL.
-        *   `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase Anon Key.
 3.  **Configure `web-admin`** (Optional):
-    *   Repeat the process, setting **Root Directory** to `apps/web-admin`.
+    *   Create a NEW project in Vercel.
+    *   **Root Directory**: `apps/web-admin`.
+    *   **Build Command**: Enable **Override** and paste:
+        ```bash
+        cd ../.. && npx turbo run build --filter=web-admin
+        ```
+    *   **Install Command**: `cd ../.. && npm install`
 
 ### Netlify
 
