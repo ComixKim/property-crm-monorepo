@@ -33,11 +33,12 @@ export function FinancialCharts() {
             if (!session) return
 
             try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
                 const [revRes, expRes] = await Promise.all([
-                    fetch('http://localhost:4000/financials/revenue-chart', {
+                    fetch(`${apiUrl}/financials/revenue-chart`, {
                         headers: { 'Authorization': `Bearer ${session.access_token}` }
                     }),
-                    fetch('http://localhost:4000/financials/expenses-chart', {
+                    fetch(`${apiUrl}/financials/expenses-chart`, {
                         headers: { 'Authorization': `Bearer ${session.access_token}` }
                     })
                 ])
