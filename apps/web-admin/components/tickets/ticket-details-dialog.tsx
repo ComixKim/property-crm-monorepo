@@ -35,71 +35,39 @@ interface Comment {
     }
 }
 
+import { createClient } from '@/utils/supabase/client'
+
+// ... existing interfaces ...
+interface Profile {
+    id: string
+    full_name: string
+    email: string
+}
+
 export function TicketDetailsDialog({ ticket, open, onOpenChange, accessToken, onSuccess }: TicketDetailsDialogProps) {
     const [comments, setComments] = useState<Comment[]>([])
     const [newComment, setNewComment] = useState('')
     const [sending, setSending] = useState(false)
     const [loadingComments, setLoadingComments] = useState(false)
+    const [serviceUsers, setServiceUsers] = useState<Profile[]>([])
 
-    // Wrap fetchComments in useCallback to include in dependency array safely
-    // But since it depends on 'ticket' and 'accessToken', we can just move it inside useEffect or define it before.
-    // However, it's used in handleSendComment too.
-    // Let's define it inside the component scope and add to deps, but satisfy linter. Or simple hack: add to deps.
-
-    const fetchComments = async () => {
-        if (!ticket) return
-        setLoadingComments(true)
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-            const res = await fetch(`${apiUrl}/tickets/${ticket.id}/comments`, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            })
-            if (res.ok) {
-                const data = await res.json()
-                setComments(data)
-            }
-        } catch (e) {
-            console.error(e)
-        } finally {
-            setLoadingComments(false)
-        }
-    }
+    const supabase = createClient()
 
     useEffect(() => {
-        if (ticket && open) {
-            fetchComments()
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ticket, open])
+        const fetchServiceUsers = async () => {
+            const { data } = await supabase
+                .from('profiles')
+                .select('id, full_name, email')
+                .eq('role', 'service')
 
-    const handleSendComment = async () => {
-        if (!newComment.trim() || !ticket) return
-        setSending(true)
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-            const res = await fetch(`${apiUrl}/tickets/${ticket.id}/comments`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify({ content: newComment })
-            })
-            if (res.ok) {
-                setNewComment('')
-                fetchComments()
-                toast.success('Comment added')
-            } else {
-                toast.error('Failed to send comment')
-            }
-        } catch {
-            toast.error('Error sending comment')
-        } finally {
-            setSending(false)
+            if (data) setServiceUsers(data)
         }
-    }
+        if (open) fetchServiceUsers()
+    }, [open, supabase])
 
-    const handleUpdateStatus = async (val: string) => {
+    // ... existing fetchComments ...
+
+    const handleUpdateTicket = async (field: 'status' | 'assignee_id', value: string) => {
         if (!ticket) return
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
@@ -109,16 +77,16 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange, accessToken, o
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`
                 },
-                body: JSON.stringify({ status: val })
+                body: JSON.stringify({ [field]: value })
             })
             if (res.ok) {
-                toast.success('Status updated')
+                toast.success(`${field === 'status' ? 'Status' : 'Assignee'} updated`)
                 onSuccess()
             } else {
-                toast.error('Failed to update status')
+                toast.error('Failed to update')
             }
         } catch {
-            toast.error('Error updating status')
+            toast.error('Error updating ticket')
         }
     }
 
@@ -141,19 +109,40 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange, accessToken, o
                             <p className="text-sm whitespace-pre-wrap">{ticket.description}</p>
                         </div>
 
-                        <div className="space-y-2">
-                            <h4 className="font-semibold text-sm">Update Status</h4>
-                            <Select defaultValue={ticket.status} onValueChange={handleUpdateStatus}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="open">Open</SelectItem>
-                                    <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="resolved">Resolved</SelectItem>
-                                    <SelectItem value="closed">Closed</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <h4 className="font-semibold text-sm">Assign To</h4>
+                                <Select
+                                    defaultValue={ticket.assignee_id || 'unassigned'}
+                                    onValueChange={(val) => handleUpdateTicket('assignee_id', val)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Service User" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                                        {serviceUsers.map(u => (
+                                            <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <h4 className="font-semibold text-sm">Update Status</h4>
+                                <Select defaultValue={ticket.status} onValueChange={(val) => handleUpdateTicket('status', val)}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="new">New</SelectItem>
+                                        <SelectItem value="open">Open</SelectItem>
+                                        <SelectItem value="in_progress">In Progress</SelectItem>
+                                        <SelectItem value="resolved">Resolved</SelectItem>
+                                        <SelectItem value="closed">Closed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </div>
 

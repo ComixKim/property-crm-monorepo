@@ -86,19 +86,19 @@ export class TicketsController {
   }
 
   @Get(':id')
-  @Roles('admin_uk', 'manager', 'tenant', 'owner')
+  @Roles('admin_uk', 'manager', 'tenant', 'owner', 'service')
   findOne(@Param('id') id: string) {
     return this.ticketsService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles('admin_uk', 'manager', 'owner', 'agent')
+  @Roles('admin_uk', 'manager', 'owner', 'agent', 'service')
   update(@Param('id') id: string, @Body() updateTicketDto: UpdateTicketDto) {
     return this.ticketsService.update(id, updateTicketDto);
   }
 
   @Post(':id/comments')
-  @Roles('tenant', 'admin_uk', 'manager', 'owner', 'agent')
+  @Roles('tenant', 'admin_uk', 'manager', 'owner', 'agent', 'service')
   addComment(
     @Param('id') id: string,
     @Request() req: any,
@@ -112,7 +112,7 @@ export class TicketsController {
   }
 
   @Get(':id/comments')
-  @Roles('tenant', 'admin_uk', 'manager', 'owner', 'agent')
+  @Roles('tenant', 'admin_uk', 'manager', 'owner', 'agent', 'service')
   getComments(@Param('id') id: string) {
     return this.ticketsService.getComments(id);
   }
