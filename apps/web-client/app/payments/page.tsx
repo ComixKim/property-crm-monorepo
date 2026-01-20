@@ -87,7 +87,7 @@ export default function PaymentsPage() {
             <h1 className="text-2xl font-bold">Payments</h1>
 
             {/* Balance Card */}
-            <Card className="bg-primary text-primary-foreground border-none">
+            <Card className="!bg-black !text-white border-none shadow-lg">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium opacity-90">Total Due</CardTitle>
                 </CardHeader>
