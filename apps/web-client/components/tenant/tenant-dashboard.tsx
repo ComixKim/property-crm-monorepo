@@ -78,7 +78,7 @@ export function TenantDashboard({ contract, profile }: TenantDashboardProps) {
                 </CardHeader>
                 <CardContent>
                     <div className="text-4xl font-bold">${contract.monthly_rent}</div>
-                    <div className="text-sm opacity-80 mt-1">Due {format(new Date(), 'MMMM 1st')}</div>
+                    <div className="text-sm opacity-80 mt-1">Due {format(new Date(), "MMMM '1st'")}</div>
                     <Link href="/payments">
                         <Button variant="secondary" className="w-full mt-6 font-semibold shadow-sm">Pay Now</Button>
                     </Link>

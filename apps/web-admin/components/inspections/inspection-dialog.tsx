@@ -44,6 +44,7 @@ import { Button } from '@/components/ui/button'
 
 const formSchema = z.object({
     property_id: z.string().uuid('Please select a property'),
+    agent_id: z.string().uuid('Please select an agent'),
     date: z.date(),
     notes: z.string().optional(),
 })
@@ -58,10 +59,18 @@ interface Property {
     title: string
 }
 
+interface AgentProfile {
+    id: string
+    full_name: string
+    email: string
+    role: string
+}
+
 export function InspectionDialog({ onSuccess, accessToken }: InspectionDialogProps) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [properties, setProperties] = useState<Property[]>([])
+    const [agents, setAgents] = useState<AgentProfile[]>([])
     const supabase = createClient()
 
     useEffect(() => {
@@ -69,7 +78,25 @@ export function InspectionDialog({ onSuccess, accessToken }: InspectionDialogPro
             const { data } = await supabase.from('properties').select('id, title').eq('status', 'active')
             if (data) setProperties(data)
         }
-        if (open) fetchProperties()
+
+        const fetchAgents = async () => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, full_name, email, role')
+                .in('role', ['agent', 'manager', 'admin_uk', 'service'])
+
+            if (error) {
+                console.error('Failed to fetch agents', error)
+                return
+            }
+
+            if (data) setAgents(data)
+        }
+
+        if (open) {
+            fetchProperties()
+            fetchAgents()
+        }
     }, [open, supabase])
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -95,6 +122,7 @@ export function InspectionDialog({ onSuccess, accessToken }: InspectionDialogPro
                 },
                 body: JSON.stringify({
                     property_id: values.property_id,
+                    agent_id: values.agent_id,
                     date: values.date.toISOString(),
                     notes: values.notes
                 }),
@@ -146,6 +174,29 @@ export function InspectionDialog({ onSuccess, accessToken }: InspectionDialogPro
                                         <SelectContent>
                                             {properties.map(p => (
                                                 <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+
+                        />
+                        <FormField
+                            control={form.control}
+                            name="agent_id"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Agent</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select an agent" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {agents.map(a => (
+                                                <SelectItem key={a.id} value={a.id}>{a.full_name || a.email}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>

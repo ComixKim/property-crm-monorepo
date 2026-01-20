@@ -47,14 +47,12 @@ export default function FinancialsPage() {
             return
         }
 
-        // Ideally fetch from API, but for direct DB access speed in admin:
         const { data, error } = await supabase
-            .from('accruals')
+            .from('financials')
             .select('*, properties(title)')
-            .order('due_date', { ascending: false })
+            .order('created_at', { ascending: false })
 
         if (data) {
-            // Map to Transaction shape if needed, or just use as is
             setTransactions(data as any)
         } else if (error) {
             console.error('Error fetching transactions:', error)
@@ -74,7 +72,7 @@ export default function FinancialsPage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-            const response = await fetch(`${apiUrl}/financials/accruals/generate`, {
+            const response = await fetch(`${apiUrl}/invoices/generate`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${session.access_token}`,
@@ -83,10 +81,10 @@ export default function FinancialsPage() {
             })
 
             if (response.ok) {
-                toast.success("Accruals Generated successfully")
+                toast.success("Monthly Invoices & Accruals Generated")
                 fetchTransactions()
             } else {
-                toast.error("Failed to generate accruals")
+                toast.error("Failed to generate invoices")
             }
 
         } catch (e) {

@@ -85,12 +85,49 @@ export function MoveProcessWizard({ open, onOpenChange, onSuccess }: MoveProcess
     }
 
     const fetchContracts = async (propId: string) => {
-        const { data } = await supabase
+        console.log('Fetching contracts for property:', propId)
+        const { data: contractsData, error: contractsError } = await supabase
             .from('contracts')
-            .select('id, profiles(full_name)')
+            .select('id, tenant_id, status')
             .eq('property_id', propId)
-            .in('status', ['active', 'signed', 'draft']) // Allowed statuses for moves
-        if (data) setContracts(data)
+            .in('status', ['active', 'draft'])
+
+        if (contractsError) {
+            console.error('Error fetching contracts:', contractsError)
+            console.error('Error details:', {
+                message: contractsError.message,
+                hint: contractsError.hint,
+                details: contractsError.details,
+                code: contractsError.code
+            })
+            // If it's a standard JS error, message is on the object but not enumerable
+            if (contractsError instanceof Error) {
+                console.error('JS Error message:', contractsError.message)
+            }
+            toast.error(`Failed to fetch contracts: ${contractsError.message || 'Unknown error'}`)
+            return
+        }
+
+        if (contractsData && contractsData.length > 0) {
+            const tenantIds = contractsData.map(c => c.tenant_id).filter(Boolean)
+
+            if (tenantIds.length > 0) {
+                const { data: profilesData } = await supabase
+                    .from('profiles')
+                    .select('id, full_name')
+                    .in('id', tenantIds)
+
+                const combined = contractsData.map(c => ({
+                    ...c,
+                    profiles: profilesData?.find(p => p.id === c.tenant_id)
+                }))
+                setContracts(combined)
+            } else {
+                setContracts(contractsData)
+            }
+        } else {
+            setContracts([])
+        }
     }
 
     const fetchBaseline = async (propId: string) => {

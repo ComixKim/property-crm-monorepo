@@ -17,7 +17,7 @@ export class InvoicesService {
   constructor(
     private readonly supabase: SupabaseService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   // Admin/System: Generate invoices for all active contracts for the current month
   async generateForCurrentMonth() {
@@ -61,6 +61,18 @@ export class InvoicesService {
 
       if (!error && data) {
         createdInvoices.push(data);
+
+        // Create Financial Accrual Record for Admin Reporting
+        await client.from('financials').insert({
+          property_id: contract.property_id,
+          contract_id: contract.id,
+          type: 'rent_accrual',
+          amount: contract.monthly_rent,
+          description: `Rent Accrual for ${format(today, 'MMMM yyyy')} (Inv #${data.id.slice(0, 6)})`,
+          due_date: dueStr,
+          status: 'pending'
+        });
+
         // Notify Tenant
         await this.notificationsService.create({
           user_id: contract.tenant_id,
@@ -113,7 +125,7 @@ export class InvoicesService {
     // 1. Get invoice
     const { data: invoice, error: fetchError } = await client
       .from('invoices')
-      .select('*, contracts(property_id)')
+      .select('*, contracts(property_id, id)')
       .eq('id', id)
       .single();
 
@@ -134,22 +146,40 @@ export class InvoicesService {
     if (updateError)
       throw new InternalServerErrorException(updateError.message);
 
-    // 3. Create Financial Transaction
+    // 3. Create Financial Transaction (Payment) - Update Status of Accrual
+    // Instead of just inserting a payment line, we should also MARK the accrual as paid or insert a payment line.
+    // Let's insert a PAYMENT line (Cash In) AND update the Accrual (Bill) to paid if we can find it.
+
+    // 3a. Insert Payment Transaction
     const { error: transError } = await client.from('financials').insert({
       property_id: invoice.contracts.property_id,
+      contract_id: invoice.contracts.id,
       type: 'payment',
       amount: invoice.amount,
       description: `Rent Payment - Invoice #${invoice.id.slice(0, 8)}`,
-      date: new Date().toISOString(), // Assuming 'date' column exists, check schema?
-      // Schema check: financials usually has created_at, allow DB to set?
-      // Previous code viewed uses 'created_at'. Let's check `financials` schema later if it fails.
+      status: 'paid',
+      due_date: new Date().toISOString() // Payment date
     });
 
     if (transError) {
       this.logger.error(
         `Invoice paid but failed to create transaction: ${transError.message}`,
       );
-      // Don't rollback invoice for now, just log. ideally transaction.
+    }
+
+    // 3b. Try to find and close the pending accrual for this month/amount
+    // This completes the loop for Admin reporting
+    const { data: accrual } = await client.from('financials')
+      .select('id')
+      .eq('contract_id', invoice.contracts.id)
+      .eq('type', 'rent_accrual')
+      .eq('status', 'pending')
+      .eq('amount', invoice.amount)
+      .limit(1)
+      .single();
+
+    if (accrual) {
+      await client.from('financials').update({ status: 'paid' }).eq('id', accrual.id);
     }
 
     // 4. Notify Owner
