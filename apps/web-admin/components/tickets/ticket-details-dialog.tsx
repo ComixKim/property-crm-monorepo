@@ -15,6 +15,7 @@ interface Ticket {
     status: string
     priority: string
     created_at: string
+    assignee_id?: string
 }
 
 interface TicketDetailsDialogProps {
@@ -65,7 +66,58 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange, accessToken, o
         if (open) fetchServiceUsers()
     }, [open, supabase])
 
-    // ... existing fetchComments ...
+    const fetchComments = async () => {
+        if (!ticket) return
+        setLoadingComments(true)
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const res = await fetch(`${apiUrl}/tickets/${ticket.id}/comments`, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setComments(data)
+            }
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setLoadingComments(false)
+        }
+    }
+
+    useEffect(() => {
+        if (ticket && open) {
+            fetchComments()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ticket, open])
+
+    const handleSendComment = async () => {
+        if (!newComment.trim() || !ticket) return
+        setSending(true)
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const res = await fetch(`${apiUrl}/tickets/${ticket.id}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({ content: newComment })
+            })
+            if (res.ok) {
+                setNewComment('')
+                fetchComments()
+                toast.success('Comment added')
+            } else {
+                toast.error('Failed to send comment')
+            }
+        } catch {
+            toast.error('Error sending comment')
+        } finally {
+            setSending(false)
+        }
+    }
 
     const handleUpdateTicket = async (field: 'status' | 'assignee_id', value: string) => {
         if (!ticket) return
