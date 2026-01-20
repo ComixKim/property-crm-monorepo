@@ -47,6 +47,18 @@ git push -u origin main
         ```
     *   **Install Command**: `cd ../.. && npm install`
 
+## Troubleshooting
+
+### Vercel: "Configuration Settings differ from Project Settings"
+This warning appears after you change settings (like Root Directory or Build Command). It means the currently live site was built with old settings.
+**Fix:** Go to the **Deployments** tab, click the three dots (`...`) next to your latest deployment, and select **Redeploy**. This will trigger a new build using your *new* settings.
+
+### Vercel: 404 Not Found after Deploy
+If the build succeeds but you see a 404:
+1.  Check **Output Directory** in Vercel.
+2.  Ensure **Root Directory** is set to `apps/web-client` (or `apps/web-admin`).
+3.  If `Root Directory` is correct, try setting **Output Directory** override to `.next`.
+
 ### Netlify
 
 1.  **Import from Git**: Connect your repository.

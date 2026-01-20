@@ -57,7 +57,8 @@ export default function InspectionsPage() {
         }
 
         try {
-            const response = await fetch('http://localhost:4000/inspections', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const response = await fetch(`${apiUrl}/inspections`, {
                 headers: {
                     'Authorization': `Bearer ${session.access_token}`
                 }
@@ -85,7 +86,8 @@ export default function InspectionsPage() {
     // Helper to update status (simple version for MVP, later full dialog)
     const updateStatus = async (id: string, status: string) => {
         try {
-            const res = await fetch(`http://localhost:4000/inspections/${id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const res = await fetch(`${apiUrl}/inspections/${id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

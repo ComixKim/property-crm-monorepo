@@ -50,7 +50,8 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange, accessToken, o
         if (!ticket) return
         setLoadingComments(true)
         try {
-            const res = await fetch(`http://localhost:4000/tickets/${ticket.id}/comments`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const res = await fetch(`${apiUrl}/tickets/${ticket.id}/comments`, {
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             })
             if (res.ok) {
@@ -75,7 +76,8 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange, accessToken, o
         if (!newComment.trim() || !ticket) return
         setSending(true)
         try {
-            const res = await fetch(`http://localhost:4000/tickets/${ticket.id}/comments`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const res = await fetch(`${apiUrl}/tickets/${ticket.id}/comments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -100,7 +102,8 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange, accessToken, o
     const handleUpdateStatus = async (val: string) => {
         if (!ticket) return
         try {
-            const res = await fetch(`http://localhost:4000/tickets/${ticket.id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const res = await fetch(`${apiUrl}/tickets/${ticket.id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

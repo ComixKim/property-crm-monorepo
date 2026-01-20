@@ -73,7 +73,8 @@ export default function FinancialsPage() {
         if (!session) return
 
         try {
-            const response = await fetch('http://localhost:4000/financials/accruals/generate', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const response = await fetch(`${apiUrl}/financials/accruals/generate`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${session.access_token}`,

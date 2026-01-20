@@ -59,7 +59,8 @@ export function PropertyWizard({ onSuccess }: PropertyWizardProps) {
         if (!session) return
 
         try {
-            const res = await fetch('http://localhost:4000/users', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const res = await fetch(`${apiUrl}/users`, {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             })
             if (res.ok) {
@@ -125,7 +126,8 @@ export function PropertyWizard({ onSuccess }: PropertyWizardProps) {
                 setUploading(false)
             }
 
-            const res = await fetch('http://localhost:4000/properties', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const res = await fetch(`${apiUrl}/properties`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

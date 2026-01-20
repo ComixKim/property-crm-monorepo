@@ -81,7 +81,8 @@ export function TicketDialog({ onSuccess, accessToken }: TicketDialogProps) {
         }
         setLoading(true)
         try {
-            const response = await fetch('http://localhost:4000/tickets', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const response = await fetch(`${apiUrl}/tickets`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

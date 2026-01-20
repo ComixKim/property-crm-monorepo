@@ -62,7 +62,8 @@ export function UserDialog({ onSuccess, accessToken }: UserDialogProps) {
         setLoading(true)
         try {
             // Note: In real prod, use env var for API URL
-            const response = await fetch('http://localhost:4000/users', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+            const response = await fetch(`${apiUrl}/users`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
